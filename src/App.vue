@@ -1,7 +1,7 @@
 <template>
   <div class="chatContainer">
     <div class="chat" v-for="(msg, index) in messages" :key="index">
-      <span class="userName">{{ msg.user }}</span>
+      <span class="userName">{{ msg.user }}:</span>
       <p class="msgBody">{{ msg.message }}</p>
     </div>
   </div>
@@ -23,26 +23,39 @@ export default {
   },
   methods: {
     receivedMSg(user, message, flags, self, extra) {
-      console.log("msg received");
       this.messages.push({ user, message, self, extra, flags });
+      setTimeout(() => {
+        this.messages = this.messages.filter((msg) => msg.user != user);
+      }, 3000);
     },
   },
 };
 </script>
 
 <style>
+@import url("https://fonts.googleapis.com/css2?family=Righteous&display=swap");
+* {
+  padding: 0;
+  margin: 0;
+}
 .chat {
-  background-color: rgba(41, 130, 255, 0.4);
+  background-color: rgb(52, 228, 255);
   color: white;
-  display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 5px 10px;
+  padding: 10px;
   font-size: 2em;
+  margin: 5px;
+  font-family: "Righteous", cursive;
+  border: solid 0.5px black;
+  border-radius: 15px;
 }
-.userName{
-  color:black !important;
+.userName {
+  color: black !important;
   font-weight: bold;
   margin-right: 15px;
+}
+.msgBody {
+  text-align: end;
 }
 </style>
