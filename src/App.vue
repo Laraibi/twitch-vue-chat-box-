@@ -1,8 +1,40 @@
 <template>
-  <div class="chatContainer">
-    <div class="chat" v-for="(msg, index) in messages" :key="index">
-      <span class="userName">{{ msg.user }}:</span>
-      <p class="msgBody">{{ msg.message }}</p>
+  <div class="container">
+    <div class="form" v-if="withForm">
+      <label for="channelName">Twitch Channel :</label>
+      <input type="text" v-model="channelName" class="form-control" />
+      <button @click="subscribe">Subscribe</button>
+    </div>
+    <div class="leaderBoard" v-if="withForm">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(chatter, index) in bestThreeChatters.slice(0, 5)"
+            :key="index"
+          >
+            <th>{{ index + 1 }}</th>
+            <td>{{ chatter.name }}</td>
+            <td>{{ chatter.count }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="chatContainer" @resize="() => wconsole.log('resize')">
+      <div
+        class="chat w3-animate-right"
+        v-for="(msg, index) in visiblesMessages"
+        :key="index"
+      >
+        <span class="userName">{{ msg.user }}:</span>
+        <p class="msgBody">{{ msg.message }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -15,6 +47,8 @@ export default {
     return {
       messages: [],
       ComfyJS: ComfyJS,
+      channelName: "larageeks",
+      withForm: false,
     };
   },
   mounted() {
@@ -23,10 +57,48 @@ export default {
   },
   methods: {
     receivedMSg(user, message, flags, self, extra) {
-      this.messages.push({ user, message, self, extra, flags });
+      let id = new Date().toString();
+      this.messages.push({
+        id,
+        user,
+        message,
+        self,
+        extra,
+        flags,
+        visible: true,
+      });
       setTimeout(() => {
-        this.messages = this.messages.filter((msg) => msg.user != user);
+        let index = this.messages.findIndex((msg) => msg.id === id);
+        this.messages[index].visible = false;
       }, 3000);
+    },
+    subscribe() {
+      ComfyJS.Init(this.channelName);
+    },
+  },
+  computed: {
+    visiblesMessages() {
+      return this.messages.filter((msg) => msg.visible);
+    },
+    chattersCounts() {
+      return this.messages.reduce((counts, msg) => {
+        // if (!counts.hasOwnProperty(msg.user)) {
+        if (!Object.prototype.hasOwnProperty.call(counts, msg.user)) {
+          counts[msg.user] = 0;
+        }
+        counts[msg.user]++;
+        return counts;
+      }, {});
+    },
+    bestThreeChatters() {
+      let chattersNames = Object.keys(this.chattersCounts);
+      let ArrayCount = chattersNames.map((name) => {
+        return {
+          name,
+          count: this.chattersCounts[name],
+        };
+      });
+      return ArrayCount.sort((a, b) => b.count - a.count);
     },
   },
 };
@@ -39,16 +111,33 @@ export default {
   margin: 0;
 }
 .chat {
-  background-color: rgb(52, 228, 255);
-  color: white;
-  flex-direction: row;
-  align-items: center;
-  padding: 10px;
-  font-size: 2em;
-  margin: 5px;
-  font-family: "Righteous", cursive;
-  border: solid 0.5px black;
-  border-radius: 15px;
+  position: relative;
+  background: linear-gradient(-81deg, #3b3b3b 0%, #34e4ff 100%);
+  color: #ffffff;
+  font-family: Arial;
+  font-size: 20px;
+  /* line-height: 120px; */
+  /* text-align: center; */
+  width: 100%;
+  /* height: 120px; */
+  border-radius: 14px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+.chat:after {
+  content: "";
+  position: absolute;
+  display: block;
+  width: 0;
+  z-index: 1;
+  border-style: solid;
+  border-width: 19px 0 0 19px;
+  border-color: transparent transparent transparent #3b3b3b;
+  top: 73%;
+  right: -19px;
+  margin-top: -9.5px;
 }
 .userName {
   color: black !important;
